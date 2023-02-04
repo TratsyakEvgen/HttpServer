@@ -1,13 +1,14 @@
 package org.example;
 
 
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.InputStreamReader;
-import java.io.BufferedReader;
 import java.nio.charset.Charset;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 
 public class Main {
@@ -37,8 +38,7 @@ public class Main {
         @Override
         public void run() {
             try {
-                AstupService astupService = new AstupService();
-                writeResponse(readInputHeaders(astupService), astupService);
+                writeResponse(readInputHeaders());
             } catch (Throwable e) {
                 e.getStackTrace();
             } finally {
@@ -50,66 +50,75 @@ public class Main {
             }
         }
 
-        private void writeResponse(String body, AstupService astupService) throws Throwable {
-            String response = "HTTP/1.1 200 OK\r\n" +
-                    "Content-Type: text/html;charset=windows-1251\r\n" +
-                    "Set-Cookie: " + astupService.getCookies() + "\r\n" +
-                    "Content-Length: " + body.length() + "\r\n\r\n";
-            String result = response + body;
-            outputStream.write(result.getBytes("windows-1251"));
+        private void writeResponse(Map<String, String> responseDocument) throws IOException {
+            String responseBody = null;
+            String responseHeaders = null;
+            for (Map.Entry<String, String> entry : responseDocument.entrySet()) {
+                responseHeaders = entry.getKey();
+                responseBody = entry.getValue();
+            }
+            String response = "HTTPS/1.1 200 OK\r\n" +
+                    "Content-Length: " + responseBody.length() +
+                    "\r\n" +
+                    responseHeaders +
+                    "\r\n\r\n" +
+                    responseBody;
+            System.out.println(responseHeaders);
+            outputStream.write(response.getBytes());//"windows-1251"
             outputStream.flush();
         }
 
-        private String readInputHeaders(AstupService astupService) throws Throwable {
+        private Map<String, String> readInputHeaders() throws Throwable {
+            String protocol = "https://";
+            String host = "qna.habr.com";
+
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
-            String requestData = bufferedReader.readLine();
-            System.out.println(requestData);
-            String body = null;
+            String requestUrl = bufferedReader.readLine();
+            String stringRequestHeaders = getHeadersRequest(bufferedReader);
+            Map<String, String> mapRequestHeaders = convertStringToMap(stringRequestHeaders, ": ");
+            mapRequestHeaders.replace("Host", host);
 
-            if (requestData.equals("GET / HTTP/1.1")) {
-                body = astupService.authorize();
+
+            if (requestUrl.contains("GET")) {
+                return Parser.requestGet(protocol, host, requestUrl, mapRequestHeaders);
             }
 
-            if (requestData.contains("GET /ASTUP_WEB/")) {
-                String cookies = null;
-                String string;
-
-                while ((string = bufferedReader.readLine()).length() != 0) {
-
-                    if (string.contains("Cookie")) {
-                        cookies = string.replace("Cookie: ", "");
-                        astupService.setCookies(cookies);
-                    }
-                }
-                requestData = requestData.replace("GET /ASTUP_WEB/", "http://10.247.16.133:8080/ASTUP_WEB/");
-                requestData = requestData.replace(" HTTP/1.1", "");
-                astupService.setCookies(cookies);
-                body = astupService.getRequest(requestData);
-            }
-
-            if (requestData.contains("POST /ASTUP_WEB/")) {
-                String cookies = null;
-                String string;
-                String requestHeaders = requestData;
-                while ((string = bufferedReader.readLine()).length() != 0) {
-                    requestHeaders = requestHeaders + string;
-                    if (string.contains("Cookie")) {
-                        cookies = string.replace("Cookie: ", "");
-                        astupService.setCookies(cookies);
-                    }
-                }
-                StringBuilder payload = new StringBuilder();
+            if (requestUrl.contains("POST")) {
+                StringBuilder stringPostData = new StringBuilder();
                 while (bufferedReader.ready()) {
-                    payload.append((char) bufferedReader.read());
+                    stringPostData.append((char) bufferedReader.read());
                 }
-                requestData = requestData.replace("POST /ASTUP_WEB/", "http://10.247.16.133:8080/ASTUP_WEB/");
-                requestData = requestData.replace(" HTTP/1.1", "");
-                astupService.setCookies(cookies);
-                System.out.println(requestHeaders);
-                body = astupService.PostRequest(requestData, String.valueOf(payload));
+                Map<String, String> postData = convertStringToMap(stringPostData.toString(), "=");
+                return Parser.requestPost(protocol, host, requestUrl, mapRequestHeaders, postData);
             }
-            return body;
+            return null;
+        }
 
+        public String getHeadersRequest(BufferedReader bufferedReader) {
+            StringBuilder requestData = new StringBuilder();
+            try {
+                requestData.append(bufferedReader.readLine());
+                String string;
+                while ((string = bufferedReader.readLine()).length() != 0) {
+                    requestData
+                            .append("&")
+                            .append(string);
+                }
+            } catch (IOException e) {
+                e.getStackTrace();
+            }
+            return requestData.toString();
+        }
+
+        public Map<String, String> convertStringToMap(String string, String regex) {
+            string = string.replace("+", "");
+            Map<String, String> map = new HashMap<>();
+            String[] array = string.split("&");
+            for (String s : array) {
+                String[] pair = s.split(regex);
+                map.put(pair[0], pair[1]);
+            }
+            return map;
         }
     }
 }
