@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="51d62f8c-8804-48cc-a4a5-5efc5f95825a" name="Changes" comment="test">
+    <list default="true" id="51d62f8c-8804-48cc-a4a5-5efc5f95825a" name="Changes" comment="не работает xrh">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/org/example/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/example/Main.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/org/example/Parser.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/example/Parser.java" afterDir="false" />

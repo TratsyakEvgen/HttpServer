@@ -40,7 +40,9 @@ public class Parser {
                                                    String postData) {
 
 
-        String url = getUrl(protocol, host, requestUrl, "GET");
+        String url = getUrl(protocol, host, requestUrl, "POST");
+        postData = postData.replace("+"," ");
+        System.out.println(postData);
         try {
             HttpRequest request;
             if (requestHeaders.length != 0) {
@@ -63,6 +65,9 @@ public class Parser {
     private static String getUrl(String protocol, String host, String requestUrl, String regex) {
         requestUrl = requestUrl.replace(regex + " ", "");
         requestUrl = requestUrl.replace(" HTTP/1.1", "");
+        if (requestUrl.equals("/")){
+            requestUrl = "/ASTUP_WEB/";
+        }
         return protocol + host + requestUrl;
     }
 }

@@ -50,23 +50,23 @@ public class Main {
 
         private void writeResponse(HttpResponse<String> response) throws IOException {
             String body = response.body();
-            body = body.replaceAll("https://qna.habr.com", "http://localhost:8080");
             String allResponse = "HTTP/1.1 200 OK\r\n" +
                     "Content-Length: " + response.body().length() +
                     "\r\n" +
                     getStringResponseHeaders(response) +
                     "\r\n" +
                     body;
-            outputStream.write(allResponse.getBytes());//"windows-1251"
+            outputStream.write(allResponse.getBytes("windows-1251"));//
             outputStream.flush();
         }
 
         private HttpResponse<String> readInputHeaders() throws Throwable {
-            String protocol = "https://";
-            String host = "qna.habr.com";
+            String protocol = "http://";
+            String host = "10.247.16.133:8080";
 
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
             String requestUrl = bufferedReader.readLine();
+            System.out.println(requestUrl);
             String[] requestHeaders = getHeadersRequest(bufferedReader, host);
 
             if (requestUrl.contains("GET")) {
@@ -90,6 +90,7 @@ public class Main {
                 while ((string = bufferedReader.readLine()).length() != 0) {
                     if (string.contains("Cookie: ") ||
                             string.contains("Accept: ")) {
+                        System.out.println(string);
                         String[] pair = string.split(": ");
                         requestData.add(pair[0]);
                         requestData.add(pair[1]);
@@ -106,8 +107,12 @@ public class Main {
             StringBuilder headers = new StringBuilder();
             for (Map.Entry<String, List<String>> s : set) {
                 String key = s.getKey();
-                if (key.contains("Cookie") ||
-                        key.contains("content-type")) {
+                if (key.equals("Set-Cookie") ||
+                        key.equals("content-type") ||
+                        key.equals("Content-Type") ||
+                        key.equals("ETag") ||
+                        key.equals("Last-Modified") ||
+                        key.equals("Server")) {
                     headers.append(key).append(": ");
                     for (String l : s.getValue()) {
                         headers.append(l).append("; ");
@@ -118,6 +123,7 @@ public class Main {
                     headers.replace(size - 2, size, "\r\n");
                 }
             }
+            System.out.println(headers);
             return String.valueOf(headers);
         }
     }
