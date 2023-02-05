@@ -1,78 +1,68 @@
 package org.example;
 
-import org.jsoup.Connection;
-import org.jsoup.Jsoup;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 
 public class Parser {
 
-    public static Map<String, String> requestGet(String protocol,
-                                                 String host,
-                                                 String requestUrl,
-                                                 Map<String, String> mapRequestHeaders) {
+    public static HttpResponse<String> requestGet(String protocol,
+                                                  String host,
+                                                  String requestUrl,
+                                                  String[] requestHeaders) {
+        String url = getUrl(protocol, host, requestUrl, "GET");
+        try {
+            HttpRequest request;
+            if (requestHeaders.length != 0) {
+                request = HttpRequest.newBuilder(new URI(url))
+                        .GET()
+                        .headers(requestHeaders)
+                        .build();
+            } else {
+                request = HttpRequest.newBuilder(new URI(url))
+                        .GET()
+                        .build();
+            }
+            return HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+        } catch (URISyntaxException | IOException | InterruptedException e) {
+            System.out.println(e.getMessage().toCharArray());
+        }
+        return null;
+    }
+
+    public static HttpResponse<String> requestPost(String protocol,
+                                                   String host, String requestUrl,
+                                                   String[] requestHeaders,
+                                                   String postData) {
+
 
         String url = getUrl(protocol, host, requestUrl, "GET");
-
         try {
-            Connection.Response response = Jsoup.connect(url)
-                    .method(Connection.Method.GET)
-                    .headers(mapRequestHeaders)
-                    .execute().bufferUp();
-
-            return getResponse(protocol, host, response);
-        } catch (IOException e) {
-            e.getStackTrace();
+            HttpRequest request;
+            if (requestHeaders.length != 0) {
+                request = HttpRequest.newBuilder(new URI(url))
+                        .POST(HttpRequest.BodyPublishers.ofString(postData))
+                        .headers(requestHeaders)
+                        .build();
+            } else {
+                request = HttpRequest.newBuilder(new URI(url))
+                        .GET()
+                        .build();
+            }
+            return HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+        } catch (URISyntaxException | IOException | InterruptedException e) {
+            System.out.println(e.getMessage().toCharArray());
         }
         return null;
-    }
-
-    public static Map<String, String> requestPost(String protocol,
-                                                  String host, String requestUrl,
-                                                  Map<String, String> mapRequestHeaders,
-                                                  Map<String, String> postData) {
-
-        String url = getUrl(protocol, host, requestUrl, "POST");
-
-        try {
-            Connection.Response response = Jsoup.connect(url)
-                    .method(Connection.Method.POST)
-                    .headers(mapRequestHeaders)
-                    .data(postData)
-                    .execute().bufferUp();
-
-            return getResponse(protocol, host, response);
-        } catch (IOException e) {
-            e.getStackTrace();
-        }
-        return null;
-    }
-
-    private static String convertMapToString(Map<String, String> map) {
-        return map.keySet().stream()
-                .map(key -> key + ": " + map.get(key))
-                .collect(Collectors.joining("\r\n"));
     }
 
     private static String getUrl(String protocol, String host, String requestUrl, String regex) {
         requestUrl = requestUrl.replace(regex + " ", "");
         requestUrl = requestUrl.replace(" HTTP/1.1", "");
         return protocol + host + requestUrl;
-    }
-
-    private static Map<String, String> getResponse(String protocol, String host, Connection.Response response) throws IOException {
-        Map<String, String> map = response.headers();
-        map.remove("Content-Encoding");
-        String responseHeaders = convertMapToString(map);
-
-        String body = response.parse().html();
-        body = body.replaceAll(protocol + host, "http://localhost:8080");
-
-        Map<String, String> responseDocument = new HashMap<>();
-        responseDocument.put(responseHeaders, body);
-        return responseDocument;
     }
 }
