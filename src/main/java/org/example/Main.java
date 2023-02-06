@@ -7,6 +7,8 @@ import java.net.http.HttpHeaders;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 public class Main {
@@ -65,11 +67,31 @@ public class Main {
             // while ((value = bufferedReaderBody.read()) != -1) {
             //    body.append((char) value);
             // }
+            System.out.println(socket.getInetAddress());
             byte[] allBytes;
             InputStream fromIs = response.body();
             allBytes = fromIs.readAllBytes();
 
-            String bodyS = new String(allBytes,"windows-1251");
+            String bodyS = new String(allBytes, "windows-1251");
+            Pattern pattern = Pattern.compile("(/ASTUP_WEB[A-Za-z./]+jpg)|" +
+                    "(/ASTUP_WEB[A-Za-z./]+svg)|" +
+                    "(/ASTUP_WEB[A-Za-z./]+png)|" +
+                    "(/ASTUP_WEB[A-Za-z./]+gif)");
+            Matcher matcher = pattern.matcher(bodyS);
+
+            StringBuilder newString = new StringBuilder();
+            int start = 0;
+            while (matcher.find()) {
+                String localUrl = bodyS.substring(matcher.start(), matcher.end());
+                //System.out.println(localUrl);
+                int end = matcher.start();
+                newString.append(bodyS, start, end).append("http://10.247.16.133:8080").append(localUrl);
+                start = matcher.end();
+
+            }
+            newString.append(bodyS.substring(start));
+            bodyS = String.valueOf(newString);
+
 
             //System.out.println(bodyS);
             //allBytes = bodyS.getBytes();
@@ -92,7 +114,6 @@ public class Main {
             // responseHeaders = responseHeaders +
             //  "content-length: " + body.length();
 
-            System.out.println(cookie);
             String allResponse = "HTTP/1.1 " + response.statusCode() + status + "\r\n" +
                     "content-length" + bodyS.length() +
                     "\r\n" +
@@ -111,7 +132,6 @@ public class Main {
 
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
             String requestUrl = bufferedReader.readLine();
-            System.out.println(requestUrl);
             String[] requestHeaders = getHeadersRequest(bufferedReader, host);
 
             if (requestUrl.contains("GET")) {
@@ -134,7 +154,7 @@ public class Main {
                 String string;
 
                 while ((string = bufferedReader.readLine()).length() != 0) {
-                    if(string.contains("Content-Type: ") | string.contains("Cookie: ")) {
+                    if (string.contains("Content-Type: ") | string.contains("Cookie: ")) {
                         String[] pair = string.split(": ");
                         requestData.add(pair[0]);
                         requestData.add(pair[1]);
