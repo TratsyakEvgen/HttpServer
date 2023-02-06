@@ -2,6 +2,7 @@ package org.example;
 
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.http.HttpClient;
@@ -10,10 +11,10 @@ import java.net.http.HttpResponse;
 
 public class Parser {
 
-    public static HttpResponse<String> requestGet(String protocol,
-                                                  String host,
-                                                  String requestUrl,
-                                                  String[] requestHeaders) {
+    public static HttpResponse<InputStream> requestGet(String protocol,
+                                                       String host,
+                                                       String requestUrl,
+                                                       String[] requestHeaders) {
         String url = getUrl(protocol, host, requestUrl, "GET");
         try {
             HttpRequest request;
@@ -27,14 +28,14 @@ public class Parser {
                         .GET()
                         .build();
             }
-            return HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+            return HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofInputStream());
         } catch (URISyntaxException | IOException | InterruptedException e) {
             System.out.println(e.getMessage().toCharArray());
         }
         return null;
     }
 
-    public static HttpResponse<String> requestPost(String protocol,
+    public static HttpResponse<InputStream> requestPost(String protocol,
                                                    String host, String requestUrl,
                                                    String[] requestHeaders,
                                                    String postData) {
@@ -42,7 +43,6 @@ public class Parser {
 
         String url = getUrl(protocol, host, requestUrl, "POST");
         postData = postData.replace("+"," ");
-        System.out.println(postData);
         try {
             HttpRequest request;
             if (requestHeaders.length != 0) {
@@ -55,7 +55,7 @@ public class Parser {
                         .GET()
                         .build();
             }
-            return HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+            return HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofInputStream());
         } catch (URISyntaxException | IOException | InterruptedException e) {
             System.out.println(e.getMessage().toCharArray());
         }
