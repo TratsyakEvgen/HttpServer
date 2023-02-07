@@ -1,113 +1,102 @@
 package org.example.service;
 
-import org.example.Parser;
 import org.example.entity.EntitySocket;
 import org.example.entity.User;
 import org.example.repository.SocketRepository;
 import org.example.util.ConvertDataUtil;
+import org.example.util.HtmlUtil;
+import org.example.util.ParserUtil;
 
 import java.io.*;
 import java.net.http.HttpHeaders;
 import java.net.http.HttpResponse;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class SocketService implements Runnable {
     private final EntitySocket entitySocket;
     private final User user;
 
-    public SocketService(EntitySocket entitySocket) throws Throwable {
+    public SocketService(EntitySocket entitySocket) throws IOException {
         this.entitySocket = new SocketRepository(entitySocket).getEntitySocket();
         this.user = entitySocket.getUser();
     }
 
+
+
     @Override
     public void run() {
         try {
-            writeResponse(Objects.requireNonNull(readInputHeaders()));
+            writeResponse(Objects.requireNonNull(getResponse()));
         } catch (Throwable e) {
             System.out.println(e.getMessage().toCharArray());
         } finally {
             try {
                 entitySocket.getSocket().close();
-            } catch (Throwable e) {
-                e.getStackTrace();
+            } catch (IOException e) {
+                System.out.println(e.getMessage());
             }
         }
     }
 
+
+
     private void writeResponse(HttpResponse<InputStream> response) throws IOException {
-        byte[] byteBody;
-        InputStream inputStreamBody = response.body();
-        byteBody = inputStreamBody.readAllBytes();
+        String charsetName = "windows-1251";
 
-        String stringBody = new String(byteBody, "windows-1251");
-        Pattern pattern = Pattern.compile("(/ASTUP_WEB[A-Za-z./]+jpg)|" +
-                "(/ASTUP_WEB[A-Za-z./]+svg)|" +
-                "(/ASTUP_WEB[A-Za-z./]+png)|" +
-                "(/ASTUP_WEB[A-Za-z./]+gif)");
-        Matcher matcher = pattern.matcher(stringBody);
+        String stringBody = ConvertDataUtil.getInputStreamToString(response.body(), charsetName);
 
-        StringBuilder newStringBody = new StringBuilder();
-        int start = 0;
-        while (matcher.find()) {
-            String localUrl = stringBody.substring(matcher.start(), matcher.end());
-            int end = matcher.start();
-            newStringBody.append(stringBody, start, end).append("http://10.247.16.133:8080").append(localUrl);
-            start = matcher.end();
-
-        }
-        newStringBody.append(stringBody.substring(start));
-        stringBody = String.valueOf(newStringBody);
+        stringBody = HtmlUtil.replaceLinksForImage(stringBody,
+                "/ASTUP_WEB/[A-Za-z./]+",
+                "http://10.247.16.133:8080");
 
 
-        HttpHeaders headers = response.headers();
-        String responseHeaders = getResponseHeaders(headers.map().entrySet());
+        HttpHeaders httpHeaders = response.headers();
+        String responseHeaders = getResponseHeaders(httpHeaders.map().entrySet());
 
-
-        String status;
-        if (response.statusCode() == 302) {
-            status = " Found";
+        int statusCode = response.statusCode();
+        String stringStatus;
+        if (statusCode == 302) {
+            stringStatus = " Found";
         } else {
-            status = " OK";
+            stringStatus = " OK";
         }
 
+        StringBuilder stringResponse = new StringBuilder("HTTP/1.1 ");
+        stringResponse.append(statusCode).append(" ").append(stringStatus).append("\r\n")
+                .append("content-length: ").append(stringBody.length()).append("\r\n")
+                .append(user.getCookie())
+                .append(responseHeaders).append("\r\n")
+                .append("\r\n")
+                .append(stringBody);
 
-        String stringResponse = "HTTP/1.1 " + response.statusCode() + status + "\r\n" +
-                "content-length" + stringBody.length() +
-                "\r\n" +
-                user.getCookie() +
-                responseHeaders +
-                "\r\n\r\n" +
-                stringBody;
-
-        entitySocket.getOutputStream().write(stringResponse.getBytes("windows-1251"));//
+        entitySocket.getOutputStream().write(String.valueOf(stringResponse).getBytes(charsetName));
         entitySocket.getOutputStream().flush();
     }
 
-    private HttpResponse<InputStream> readInputHeaders() throws Throwable {
-        String host = "http://10.247.16.133:8080";
+
+
+    private HttpResponse<InputStream> getResponse() throws Throwable {
 
         BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(entitySocket.getInputStream()));
-        String requestUrl = bufferedReader.readLine();
+        String general = bufferedReader.readLine();
+
         String[] requestHeaders = getHeadersRequest(bufferedReader);
 
-        if (requestUrl.contains("GET")) {
-            return Parser.requestGet(host, requestUrl, requestHeaders);
+        if (general.contains("GET")) {
+            return new ParserUtil().requestGet(general, requestHeaders);
         }
 
-        if (requestUrl.contains("POST")) {
-            StringBuilder postData = new StringBuilder();
-            while (bufferedReader.ready()) {
-                postData.append((char) bufferedReader.read());
-            }
-            return Parser.requestPost(host, requestUrl, requestHeaders, String.valueOf(postData));
+        if (general.contains("POST")) {
+            return new ParserUtil().requestPost(general,
+                    requestHeaders,
+                    ConvertDataUtil.getBufferReaderToString(bufferedReader));
         }
         return null;
     }
 
-    public String[] getHeadersRequest(BufferedReader bufferedReader) {
+
+
+    private String[] getHeadersRequest(BufferedReader bufferedReader) {
         List<String> requestData = new ArrayList<>();
         try {
             String string;
@@ -124,11 +113,13 @@ public class SocketService implements Runnable {
         return requestData.toArray(new String[0]);
     }
 
+
+
     private String getResponseHeaders(Set<Map.Entry<String, List<String>>> set) {
         StringBuilder headers = new StringBuilder();
         for (Map.Entry<String, List<String>> entry : set) {
             String key = entry.getKey();
-            String string = ConvertDataUtil.convertMapEntryToString(entry);
+            String string = ConvertDataUtil.getMapEntryToString(entry);
             if (!key.equals("content-length") & !key.equals("transfer-encoding")) {
                 if (key.equals("set-cookie")) {
                     if (user.getCookie().equals("")) {
@@ -142,6 +133,7 @@ public class SocketService implements Runnable {
         }
         return String.valueOf(headers);
     }
+
 
 }
 

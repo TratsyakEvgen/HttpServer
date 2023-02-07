@@ -1,6 +1,7 @@
 package org.example.entity;
 
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
@@ -13,7 +14,7 @@ public class EntitySocket {
     private final OutputStream outputStream;
     private User user;
 
-    public EntitySocket(Socket socket) throws Throwable {
+    public EntitySocket(Socket socket) throws IOException {
         this.socket = socket;
         this.inputStream = socket.getInputStream();
         this.outputStream = socket.getOutputStream();
