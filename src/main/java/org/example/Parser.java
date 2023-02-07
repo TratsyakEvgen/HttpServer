@@ -11,11 +11,10 @@ import java.net.http.HttpResponse;
 
 public class Parser {
 
-    public static HttpResponse<InputStream> requestGet(String protocol,
-                                                       String host,
+    public static HttpResponse<InputStream> requestGet(String host,
                                                        String requestUrl,
                                                        String[] requestHeaders) {
-        String url = getUrl(protocol, host, requestUrl, "GET");
+        String url = getUrl(host, requestUrl, "GET");
         try {
             HttpRequest request;
             if (requestHeaders.length != 0) {
@@ -35,14 +34,14 @@ public class Parser {
         return null;
     }
 
-    public static HttpResponse<InputStream> requestPost(String protocol,
-                                                   String host, String requestUrl,
-                                                   String[] requestHeaders,
-                                                   String postData) {
+    public static HttpResponse<InputStream> requestPost(String host,
+                                                        String requestUrl,
+                                                        String[] requestHeaders,
+                                                        String postData) {
 
 
-        String url = getUrl(protocol, host, requestUrl, "POST");
-        postData = postData.replace("+"," ");
+        String url = getUrl(host, requestUrl, "POST");
+        postData = postData.replace("+", " ");
         try {
             HttpRequest request;
             if (requestHeaders.length != 0) {
@@ -62,12 +61,12 @@ public class Parser {
         return null;
     }
 
-    private static String getUrl(String protocol, String host, String requestUrl, String regex) {
+    private static String getUrl(String host, String requestUrl, String regex) {
         requestUrl = requestUrl.replace(regex + " ", "");
         requestUrl = requestUrl.replace(" HTTP/1.1", "");
-        if (requestUrl.equals("/")){
+        if (requestUrl.equals("/")) {
             requestUrl = "/ASTUP_WEB/";
         }
-        return protocol + host + requestUrl;
+        return host + requestUrl;
     }
 }
