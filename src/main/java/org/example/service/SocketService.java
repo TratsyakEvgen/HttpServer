@@ -3,7 +3,6 @@ package org.example.service;
 import org.example.entity.User;
 import org.example.util.ConvertDataUtil;
 import org.example.util.HtmlUtil;
-import org.example.util.ParserUtil;
 
 import java.io.*;
 import java.net.Socket;
@@ -25,7 +24,6 @@ public class SocketService implements Runnable {
     }
 
 
-
     @Override
     public void run() {
         try {
@@ -42,7 +40,6 @@ public class SocketService implements Runnable {
     }
 
 
-
     private void sendResponse(HttpResponse<InputStream> response) throws IOException {
         String charsetName = "windows-1251";
 
@@ -51,7 +48,6 @@ public class SocketService implements Runnable {
         stringBody = HtmlUtil.replaceLinksForImage(stringBody,
                 "/ASTUP_WEB/[A-Za-z./]+",
                 "http://10.247.16.133:8080");
-
 
         HttpHeaders httpHeaders = response.headers();
         String responseHeaders = getResponseHeaders(httpHeaders.map().entrySet());
@@ -64,39 +60,36 @@ public class SocketService implements Runnable {
             stringStatus = " OK";
         }
 
-        StringBuilder stringResponse = new StringBuilder("HTTP/1.1 ");
-        stringResponse.append(statusCode).append(" ").append(stringStatus).append("\r\n")
-                .append("content-length: ").append(stringBody.length()).append("\r\n")
-                .append(user.getCookie())
-                .append(responseHeaders).append("\r\n")
-                .append("\r\n")
-                .append(stringBody);
-
-        outputStream.write(String.valueOf(stringResponse).getBytes(charsetName));
+        String stringResponse = "HTTP/1.1 " + statusCode + " " + stringStatus + "\r\n" +
+                user.getCookie() +
+                responseHeaders + "\r\n" +
+                "\r\n" +
+                stringBody;
+        outputStream.write(stringResponse.getBytes(charsetName));
         outputStream.flush();
     }
-
 
 
     private HttpResponse<InputStream> executeRequest() throws Throwable {
 
         BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
         String general = bufferedReader.readLine();
-
+        String url = getUrl(general);
         String[] requestHeaders = getHeadersRequest(bufferedReader);
 
+
         if (general.contains("GET")) {
-            return new ParserUtil().executeGetRequest(general, requestHeaders);
+
+            return new ParserService(url, requestHeaders).executeGetRequest();
         }
 
         if (general.contains("POST")) {
-            return new ParserUtil().executePostRequest(general,
-                    requestHeaders,
-                    ConvertDataUtil.getBufferReaderToString(bufferedReader));
+            String postData = ConvertDataUtil.getBufferReaderToString(bufferedReader);
+            postData = postData.replace("+", " ");
+            return new ParserService(url, requestHeaders, postData).executePostRequest();
         }
         return null;
     }
-
 
 
     private String[] getHeadersRequest(BufferedReader bufferedReader) {
@@ -117,7 +110,6 @@ public class SocketService implements Runnable {
     }
 
 
-
     private String getResponseHeaders(Set<Map.Entry<String, List<String>>> set) {
         StringBuilder headers = new StringBuilder();
         for (Map.Entry<String, List<String>> entry : set) {
@@ -126,7 +118,6 @@ public class SocketService implements Runnable {
             if (!key.equals("content-length") & !key.equals("transfer-encoding")) {
                 if (key.equals("set-cookie")) {
                     if (user.getCookie().equals("")) {
-                        headers.append(string);
                         user.setCookie(string);
                     }
                 } else {
@@ -137,6 +128,15 @@ public class SocketService implements Runnable {
         return String.valueOf(headers);
     }
 
+    private String getUrl(String requestUrl) {
+        requestUrl = requestUrl.replace("GET ", "");
+        requestUrl = requestUrl.replace("POST ", "");
+        requestUrl = requestUrl.replace(" HTTP/1.1", "");
+        if (requestUrl.equals("/")) {
+            requestUrl = "/ASTUP_WEB/";
+        }
+        return "http://10.247.16.133:8080" + requestUrl;
+    }
 
 
 }
