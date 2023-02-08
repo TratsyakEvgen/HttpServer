@@ -12,13 +12,20 @@ import java.net.http.HttpResponse;
 public class ParserUtil {
     private final String HOST = "http://10.247.16.133:8080";
 
-    public HttpResponse<InputStream> requestGet(String requestUrl, String[] requestHeaders) {
+    public HttpResponse<InputStream> executeGetRequest(String requestUrl, String[] requestHeaders) {
         String url = getUrl(requestUrl, "GET");
         try {
-            HttpRequest request = HttpRequest.newBuilder(new URI(url))
-                    .GET()
-                    .headers(requestHeaders)
-                    .build();
+            HttpRequest request;
+            if (requestHeaders.length != 0) {
+                request = HttpRequest.newBuilder(new URI(url))
+                        .GET()
+                        .headers(requestHeaders)
+                        .build();
+            } else {
+                request = HttpRequest.newBuilder(new URI(url))
+                        .GET()
+                        .build();
+            }
             return HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofInputStream());
         } catch (URISyntaxException | IOException | InterruptedException e) {
             System.out.println(e.getMessage().toCharArray());
@@ -26,14 +33,21 @@ public class ParserUtil {
         return null;
     }
 
-    public HttpResponse<InputStream> requestPost(String requestUrl, String[] requestHeaders, String postData) {
+    public HttpResponse<InputStream> executePostRequest(String requestUrl, String[] requestHeaders, String postData) {
         String url = getUrl(requestUrl, "POST");
         postData = postData.replace("+", " ");
         try {
-            HttpRequest request = HttpRequest.newBuilder(new URI(url))
+            HttpRequest request;
+            if (requestHeaders.length != 0) {
+                request = HttpRequest.newBuilder(new URI(url))
                         .POST(HttpRequest.BodyPublishers.ofString(postData))
                         .headers(requestHeaders)
                         .build();
+            } else {
+                request = HttpRequest.newBuilder(new URI(url))
+                        .GET()
+                        .build();
+            }
             return HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofInputStream());
         } catch (URISyntaxException | IOException | InterruptedException e) {
             System.out.println(e.getMessage().toCharArray());

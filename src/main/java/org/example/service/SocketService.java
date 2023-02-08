@@ -1,24 +1,27 @@
 package org.example.service;
 
-import org.example.entity.EntitySocket;
 import org.example.entity.User;
-import org.example.repository.SocketRepository;
 import org.example.util.ConvertDataUtil;
 import org.example.util.HtmlUtil;
 import org.example.util.ParserUtil;
 
 import java.io.*;
+import java.net.Socket;
 import java.net.http.HttpHeaders;
 import java.net.http.HttpResponse;
 import java.util.*;
 
 public class SocketService implements Runnable {
-    private final EntitySocket entitySocket;
+    private final Socket socket;
+    private final InputStream inputStream;
+    private final OutputStream outputStream;
     private final User user;
 
-    public SocketService(EntitySocket entitySocket) throws IOException {
-        this.entitySocket = new SocketRepository(entitySocket).getEntitySocket();
-        this.user = entitySocket.getUser();
+    public SocketService(Socket socket, User user) throws IOException {
+        this.socket = socket;
+        this.inputStream = socket.getInputStream();
+        this.outputStream = socket.getOutputStream();
+        this.user = user;
     }
 
 
@@ -26,12 +29,12 @@ public class SocketService implements Runnable {
     @Override
     public void run() {
         try {
-            writeResponse(Objects.requireNonNull(getResponse()));
+            sendResponse(Objects.requireNonNull(executeRequest()));
         } catch (Throwable e) {
-            System.out.println(e.getMessage().toCharArray());
+            System.out.println(e.getMessage());
         } finally {
             try {
-                entitySocket.getSocket().close();
+                socket.close();
             } catch (IOException e) {
                 System.out.println(e.getMessage());
             }
@@ -40,7 +43,7 @@ public class SocketService implements Runnable {
 
 
 
-    private void writeResponse(HttpResponse<InputStream> response) throws IOException {
+    private void sendResponse(HttpResponse<InputStream> response) throws IOException {
         String charsetName = "windows-1251";
 
         String stringBody = ConvertDataUtil.getInputStreamToString(response.body(), charsetName);
@@ -69,25 +72,25 @@ public class SocketService implements Runnable {
                 .append("\r\n")
                 .append(stringBody);
 
-        entitySocket.getOutputStream().write(String.valueOf(stringResponse).getBytes(charsetName));
-        entitySocket.getOutputStream().flush();
+        outputStream.write(String.valueOf(stringResponse).getBytes(charsetName));
+        outputStream.flush();
     }
 
 
 
-    private HttpResponse<InputStream> getResponse() throws Throwable {
+    private HttpResponse<InputStream> executeRequest() throws Throwable {
 
-        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(entitySocket.getInputStream()));
+        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
         String general = bufferedReader.readLine();
 
         String[] requestHeaders = getHeadersRequest(bufferedReader);
 
         if (general.contains("GET")) {
-            return new ParserUtil().requestGet(general, requestHeaders);
+            return new ParserUtil().executeGetRequest(general, requestHeaders);
         }
 
         if (general.contains("POST")) {
-            return new ParserUtil().requestPost(general,
+            return new ParserUtil().executePostRequest(general,
                     requestHeaders,
                     ConvertDataUtil.getBufferReaderToString(bufferedReader));
         }
@@ -133,6 +136,7 @@ public class SocketService implements Runnable {
         }
         return String.valueOf(headers);
     }
+
 
 
 }

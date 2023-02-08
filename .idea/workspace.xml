@@ -4,14 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="51d62f8c-8804-48cc-a4a5-5efc5f95825a" name="Changes" comment="черновая рабочая верся (починл картинки - почти все)">
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/example/util/HtmlUtil.java" afterDir="false" />
+    <list default="true" id="51d62f8c-8804-48cc-a4a5-5efc5f95825a" name="Changes" comment="исправил индусский">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/example/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/example/Server.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/example/Parser.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/example/util/ParserUtil.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/example/entity/EntitySocket.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/example/entity/EntitySocket.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/example/Server.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/example/Server.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/example/entity/EntitySocket.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/example/repository/SocketRepository.java" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/org/example/service/SocketService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/example/service/SocketService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/example/util/ConvertDataUtil.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/example/util/ConvertDataUtil.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/example/util/ParserUtil.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/example/util/ParserUtil.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -90,7 +89,14 @@
       <option name="project" value="LOCAL" />
       <updated>1675691632013</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="исправил индусский">
+      <created>1675798998621</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1675798998621</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -108,7 +114,8 @@
     <MESSAGE value="test" />
     <MESSAGE value="черновая рабочая верся (нет графики)" />
     <MESSAGE value="черновая рабочая верся (починл картинки - почти все)" />
-    <option name="LAST_COMMIT_MESSAGE" value="черновая рабочая верся (починл картинки - почти все)" />
+    <MESSAGE value="исправил индусский" />
+    <option name="LAST_COMMIT_MESSAGE" value="исправил индусский" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
